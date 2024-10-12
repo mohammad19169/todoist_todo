@@ -12,11 +12,11 @@ class TodoT extends StatefulWidget {
 class _TodoState extends State<TodoT> {
   TextEditingController addController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
-  String selectedPriority = '1'; // Default priority (Medium)
+  String selectedPriority = '1';
   List<Map<String, dynamic>> tasks = [];
-  String todoistApiKey = '346b45e26a52908b1625de738804690e19e11fba'; // Replace with your API key
-  bool sortAscending = true; // Tracks sorting order (true: Low to High, false: High to Low)
-  String filterPriority = 'All'; // For filtering tasks by priority
+  String todoistApiKey = '346b45e26a52908b1625de738804690e19e11fba';
+  bool sortAscending = true;
+  String filterPriority = 'All';
 
   @override
   void initState() {
@@ -24,7 +24,6 @@ class _TodoState extends State<TodoT> {
     fetchTasks();
   }
 
-  // Fetch tasks from Todoist (v2 API)
   Future<void> fetchTasks() async {
     try {
       final response = await http.get(
@@ -48,7 +47,6 @@ class _TodoState extends State<TodoT> {
     }
   }
 
-  // Add a task to Todoist (v2 API)
   Future<void> postData(String taskName, String description, String priority) async {
     try {
       final response = await http.post(
@@ -60,7 +58,7 @@ class _TodoState extends State<TodoT> {
         body: json.encode({
           'content': taskName,
           'description': description,
-          'priority': int.parse(priority), // Convert priority to int for Todoist
+          'priority': int.parse(priority),
         }),
       );
 
@@ -76,10 +74,8 @@ class _TodoState extends State<TodoT> {
     }
   }
 
-  // Update a task in Todoist (v2 API)
   Future<void> updateData(String id, String taskName, String description, String priority) async {
   try {
-    // Step 1: Update the task locally before making the API call
     setState(() {
       final taskIndex = tasks.indexWhere((task) => task['id'] == id);
       if (taskIndex != -1) {
@@ -92,7 +88,6 @@ class _TodoState extends State<TodoT> {
       }
     });
 
-    // Step 2: Make the API call to update the task
     final response = await http.post(
       Uri.parse('https://api.todoist.com/rest/v2/tasks/$id'),
       headers: {
@@ -106,24 +101,22 @@ class _TodoState extends State<TodoT> {
       }),
     );
 
-    // Step 3: Check the API response status
-    if (response.statusCode == 204) {
-      // Success
+    if (response.statusCode == 200) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Task updated successfully')),
       );
+      addController.clear(); // Clear the task name text field
+      descriptionController.clear(); // Clear the description text field
+      selectedPriority = '1'; // Reset the priority to High (or default)
     } else {
-      // Handle unexpected status code
       _showAlertDialog("Error", "Failed to update task: ${response.body}");
     }
   } catch (e) {
-    // Handle any errors
     _showAlertDialog("Error", "Failed to update task: $e");
   }
 }
 
 
- // Delete a task in Todoist (v2 API)
   Future<void> deleteData(String id) async {
     try {
       final response = await http.delete(
@@ -142,7 +135,6 @@ class _TodoState extends State<TodoT> {
     }
   }
 
-  // Map priority numbers to text
   String _getPriorityText(int priority) {
     switch (priority) {
       case 1:
@@ -156,7 +148,6 @@ class _TodoState extends State<TodoT> {
     }
   }
 
-  // Sort tasks based on priority
   void _sortTasks() {
     tasks.sort((a, b) {
       int priorityComparison =
@@ -165,7 +156,6 @@ class _TodoState extends State<TodoT> {
     });
   }
 
-  // Filter tasks by priority
   List<Map<String, dynamic>> _filterTasks() {
     if (filterPriority == 'All') {
       return tasks;
@@ -175,7 +165,6 @@ class _TodoState extends State<TodoT> {
     }).toList();
   }
 
-  // Alert dialog to show errors
   void _showAlertDialog(String title, String content) {
     showDialog(
       context: context,
@@ -196,7 +185,6 @@ class _TodoState extends State<TodoT> {
     );
   }
 
-  // Function to open the update dialog
   void _openUpdateDialog(String id, String taskName, String description, String priority) {
     addController.text = taskName;
     descriptionController.text = description;
@@ -262,13 +250,12 @@ class _TodoState extends State<TodoT> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Todoist Todo App"),
+        title: const Text("Todo App",style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blueGrey,fontSize: 25)),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: fetchTasks,
           ),
-          // Updated icon to show vertical arrows
           IconButton(
             icon: sortAscending
                 ? const Icon(Icons.arrow_upward)
@@ -332,35 +319,36 @@ class _TodoState extends State<TodoT> {
               },
               child: const Text('Add Task'),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 16.0),
             Expanded(
               child: ListView.builder(
                 itemCount: _filterTasks().length,
                 itemBuilder: (context, index) {
                   final task = _filterTasks()[index];
-                  return Card(
-                    child: ListTile(
-                      title: Text(task['content']),
-                      subtitle: Text(
-                          'Priority: ${_getPriorityText(task['priority'])}'),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit),
-                            onPressed: () {
-                              _openUpdateDialog(task['id'], task['content'],
-                                  task['description'], task['priority'].toString());
-                            },
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete),
-                            onPressed: () {
-                              deleteData(task['id']);
-                            },
-                          ),
-                        ],
-                      ),
+                  return ListTile(
+                    title: Text(task['content']),
+                    subtitle: Text(task['description'] ?? ""),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: () {
+                            _openUpdateDialog(
+                              task['id'].toString(),
+                              task['content'],
+                              task['description'] ?? '',
+                              task['priority'].toString(),
+                            );
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () {
+                            deleteData(task['id'].toString());
+                          },
+                        ),
+                      ],
                     ),
                   );
                 },
