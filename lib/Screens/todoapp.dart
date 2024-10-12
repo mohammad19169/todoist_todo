@@ -12,11 +12,8 @@ class TodoT extends StatefulWidget {
 class _TodoState extends State<TodoT> {
   TextEditingController addController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
-  String selectedPriority = '1';
   List<Map<String, dynamic>> tasks = [];
   String todoistApiKey = '346b45e26a52908b1625de738804690e19e11fba';
-  bool sortAscending = true;
-  String filterPriority = 'All';
 
   @override
   void initState() {
@@ -36,8 +33,6 @@ class _TodoState extends State<TodoT> {
         List<dynamic> data = jsonDecode(response.body);
         setState(() {
           tasks = data.map((task) => task as Map<String, dynamic>).toList();
-          _sortTasks();
-          _filterTasks();
         });
       } else {
         _showAlertDialog("Error", "Failed to fetch tasks");
@@ -47,7 +42,7 @@ class _TodoState extends State<TodoT> {
     }
   }
 
-  Future<void> postData(String taskName, String description, String priority) async {
+  Future<void> postData(String taskName, String description) async {
     try {
       final response = await http.post(
         Uri.parse('https://api.todoist.com/rest/v2/tasks'),
@@ -58,7 +53,6 @@ class _TodoState extends State<TodoT> {
         body: json.encode({
           'content': taskName,
           'description': description,
-          'priority': int.parse(priority),
         }),
       );
 
@@ -66,6 +60,7 @@ class _TodoState extends State<TodoT> {
         fetchTasks();
         addController.clear();
         descriptionController.clear();
+        Navigator.of(context).pop();
       } else {
         _showAlertDialog("Error", "Failed to add task");
       }
@@ -74,48 +69,34 @@ class _TodoState extends State<TodoT> {
     }
   }
 
-  Future<void> updateData(String id, String taskName, String description, String priority) async {
-  try {
-    setState(() {
-      final taskIndex = tasks.indexWhere((task) => task['id'] == id);
-      if (taskIndex != -1) {
-        tasks[taskIndex] = {
-          'id': id,
+  Future<void> updateData(String id, String taskName, String description) async {
+    try {
+      final response = await http.post(
+        Uri.parse('https://api.todoist.com/rest/v2/tasks/$id'),
+        headers: {
+          'Authorization': 'Bearer $todoistApiKey',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
           'content': taskName,
           'description': description,
-          'priority': int.parse(priority),
-        };
-      }
-    });
-
-    final response = await http.post(
-      Uri.parse('https://api.todoist.com/rest/v2/tasks/$id'),
-      headers: {
-        'Authorization': 'Bearer $todoistApiKey',
-        'Content-Type': 'application/json',
-      },
-      body: json.encode({
-        'content': taskName,
-        'description': description,
-        'priority': int.parse(priority),
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Task updated successfully')),
+        }),
       );
-      addController.clear(); // Clear the task name text field
-      descriptionController.clear(); // Clear the description text field
-      selectedPriority = '1'; // Reset the priority to High (or default)
-    } else {
-      _showAlertDialog("Error", "Failed to update task: ${response.body}");
-    }
-  } catch (e) {
-    _showAlertDialog("Error", "Failed to update task: $e");
-  }
-}
 
+      if (response.statusCode == 200) {
+        fetchTasks();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Task updated successfully')),
+        );
+        addController.clear();
+        descriptionController.clear();
+      } else {
+        _showAlertDialog("Error", "Failed to update task: ${response.body}");
+      }
+    } catch (e) {
+      _showAlertDialog("Error", "Failed to update task: $e");
+    }
+  }
 
   Future<void> deleteData(String id) async {
     try {
@@ -133,36 +114,6 @@ class _TodoState extends State<TodoT> {
     } catch (e) {
       _showAlertDialog("Error", "Failed to delete task: $e");
     }
-  }
-
-  String _getPriorityText(int priority) {
-    switch (priority) {
-      case 1:
-        return 'High';
-      case 2:
-        return 'Medium';
-      case 3:
-        return 'Low';
-      default:
-        return 'Unknown';
-    }
-  }
-
-  void _sortTasks() {
-    tasks.sort((a, b) {
-      int priorityComparison =
-          (a['priority'] as int).compareTo(b['priority'] as int);
-      return sortAscending ? priorityComparison : -priorityComparison;
-    });
-  }
-
-  List<Map<String, dynamic>> _filterTasks() {
-    if (filterPriority == 'All') {
-      return tasks;
-    }
-    return tasks.where((task) {
-      return _getPriorityText(task['priority']) == filterPriority;
-    }).toList();
   }
 
   void _showAlertDialog(String title, String content) {
@@ -185,10 +136,9 @@ class _TodoState extends State<TodoT> {
     );
   }
 
-  void _openUpdateDialog(String id, String taskName, String description, String priority) {
+  void _openUpdateDialog(String id, String taskName, String description) {
     addController.text = taskName;
     descriptionController.text = description;
-    selectedPriority = priority;
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -205,20 +155,6 @@ class _TodoState extends State<TodoT> {
                 controller: descriptionController,
                 decoration: const InputDecoration(labelText: "Task Description"),
               ),
-              DropdownButtonFormField<String>(
-                value: selectedPriority,
-                items: const [
-                  DropdownMenuItem(value: '1', child: Text('High')),
-                  DropdownMenuItem(value: '2', child: Text('Medium')),
-                  DropdownMenuItem(value: '3', child: Text('Low')),
-                ],
-                onChanged: (value) {
-                  setState(() {
-                    selectedPriority = value!;
-                  });
-                },
-                decoration: const InputDecoration(labelText: 'Priority'),
-              ),
             ],
           ),
           actions: <Widget>[
@@ -226,12 +162,15 @@ class _TodoState extends State<TodoT> {
               onPressed: () {
                 if (addController.text.isNotEmpty &&
                     descriptionController.text.isNotEmpty) {
-                  updateData(id, addController.text, descriptionController.text, selectedPriority);
+                  updateData(id, addController.text, descriptionController.text);
                   Navigator.of(context).pop();
                 } else {
                   _showAlertDialog("Error", "Please fill all fields");
                 }
               },
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.blue,
+              ),
               child: const Text('Update'),
             ),
             TextButton(
@@ -250,113 +189,133 @@ class _TodoState extends State<TodoT> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Todo App",style: TextStyle(fontWeight: FontWeight.bold,color: Colors.blueGrey,fontSize: 25)),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: fetchTasks,
-          ),
-          IconButton(
-            icon: sortAscending
-                ? const Icon(Icons.arrow_upward)
-                : const Icon(Icons.arrow_downward),
-            onPressed: () {
-              setState(() {
-                sortAscending = !sortAscending;
-                _sortTasks();
-              });
-            },
-          ),
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              setState(() {
-                filterPriority = value;
-              });
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(value: 'All', child: Text('All Priorities')),
-              const PopupMenuItem(value: 'High', child: Text('High')),
-              const PopupMenuItem(value: 'Medium', child: Text('Medium')),
-              const PopupMenuItem(value: 'Low', child: Text('Low')),
-            ],
-          ),
-        ],
+        backgroundColor: Colors.blueGrey,
+        title: const Text("Todo App", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 25)),
       ),
-      body: Padding(
+      body: Container(
+        color: const Color(0xFFF5F5F5),
         padding: const EdgeInsets.all(8.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: addController,
-              decoration: const InputDecoration(labelText: "Task Name"),
-            ),
-            TextField(
-              controller: descriptionController,
-              decoration: const InputDecoration(labelText: "Task Description"),
-            ),
-            DropdownButtonFormField<String>(
-              value: selectedPriority,
-              items: const [
-                DropdownMenuItem(value: '1', child: Text('High')),
-                DropdownMenuItem(value: '2', child: Text('Medium')),
-                DropdownMenuItem(value: '3', child: Text('Low')),
-              ],
-              onChanged: (value) {
-                setState(() {
-                  selectedPriority = value!;
-                });
-              },
-              decoration: const InputDecoration(labelText: 'Priority'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (addController.text.isNotEmpty &&
-                    descriptionController.text.isNotEmpty) {
-                  postData(addController.text, descriptionController.text, selectedPriority);
-                } else {
-                  _showAlertDialog("Error", "Please fill all fields");
-                }
-              },
-              child: const Text('Add Task'),
-            ),
-            const SizedBox(height: 16.0),
-            Expanded(
-              child: ListView.builder(
-                itemCount: _filterTasks().length,
-                itemBuilder: (context, index) {
-                  final task = _filterTasks()[index];
-                  return ListTile(
-                    title: Text(task['content']),
-                    subtitle: Text(task['description'] ?? ""),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () {
-                            _openUpdateDialog(
-                              task['id'].toString(),
-                              task['content'],
-                              task['description'] ?? '',
-                              task['priority'].toString(),
-                            );
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed: () {
-                            deleteData(task['id'].toString());
-                          },
-                        ),
-                      ],
+        child: ListView.builder(
+          itemCount: tasks.length,
+          itemBuilder: (context, index) {
+            final task = tasks[index];
+            return Card(
+              elevation: 4,
+              margin: const EdgeInsets.symmetric(vertical: 8.0),
+              color: Colors.white,
+              child: ListTile(
+                title: Text(
+                  task['content'],
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+                ),
+                subtitle: Text(task['description'] ?? "", style: const TextStyle(color: Colors.grey)),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.blue),
+                      onPressed: () {
+                        _openUpdateDialog(
+                          task['id'].toString(),
+                          task['content'],
+                          task['description'] ?? '',
+                        );
+                      },
                     ),
-                  );
-                },
+                    IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () {
+                        deleteData(task['id'].toString());
+                      },
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            );
+          },
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _openAddTaskDialog();
+        },
+        child: const Icon(Icons.add),
+        backgroundColor: Colors.blue,
+      ),
+    );
+  }
+
+  void _openAddTaskDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Add New Task',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blueGrey[700],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: addController,
+                  decoration: InputDecoration(
+                    labelText: 'Task Name',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    prefixIcon: Icon(Icons.task),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: descriptionController,
+                  decoration: InputDecoration(
+                    labelText: 'Task Description',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    prefixIcon: Icon(Icons.description),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        if (addController.text.isNotEmpty &&
+                            descriptionController.text.isNotEmpty) {
+                          postData(addController.text, descriptionController.text);
+                        } else {
+                          _showAlertDialog("Error", "Please fill all fields");
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text('Add Task'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
