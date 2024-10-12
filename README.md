@@ -1,6 +1,6 @@
 # todoist_todo
 
-A new Flutter project.
+A new Flutter project made with the help of Todoist API. Todo App manages your tasks efficiently.
 
 ## Getting Started
 
