@@ -121,11 +121,12 @@ class _TodoState extends State<TodoT> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(title),
-          content: Text(content),
+          backgroundColor: Colors.grey[900],
+          title: Text(title, style: const TextStyle(color: Colors.white)),
+          content: Text(content, style: const TextStyle(color: Colors.white70)),
           actions: <Widget>[
             TextButton(
-              child: const Text('OK'),
+              child: const Text('OK', style: TextStyle(color: Colors.blueAccent)),
               onPressed: () {
                 Navigator.of(context).pop();
               },
@@ -143,17 +144,32 @@ class _TodoState extends State<TodoT> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Update Task'),
+          backgroundColor: Colors.grey[900],
+          title: const Text('Update Task', style: TextStyle(color: Colors.white)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: addController,
-                decoration: const InputDecoration(labelText: "Task Name"),
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: "Task Name",
+                  labelStyle: TextStyle(color: Colors.white70),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.blueAccent),
+                  ),
+                ),
               ),
               TextField(
                 controller: descriptionController,
-                decoration: const InputDecoration(labelText: "Task Description"),
+                style: const TextStyle(color: Colors.white),
+                decoration: const InputDecoration(
+                  labelText: "Task Description",
+                  labelStyle: TextStyle(color: Colors.white70),
+                  focusedBorder: UnderlineInputBorder(
+                    borderSide: BorderSide(color: Colors.blueAccent),
+                  ),
+                ),
               ),
             ],
           ),
@@ -169,15 +185,15 @@ class _TodoState extends State<TodoT> {
                 }
               },
               style: TextButton.styleFrom(
-                backgroundColor: Colors.blue,
+                backgroundColor: Colors.blueAccent,
               ),
-              child: const Text('Update'),
+              child: const Text('Update', style: TextStyle(color: Colors.white)),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('Cancel'),
+              child: const Text('Cancel', style: TextStyle(color: Colors.white)),
             ),
           ],
         );
@@ -189,11 +205,11 @@ class _TodoState extends State<TodoT> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.blueGrey,
-        title: const Text("Todo App", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 25)),
+        backgroundColor: Colors.black,
+        title: const Center(child:  Text("Get It Done", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 25))),
       ),
       body: Container(
-        color: const Color(0xFFF5F5F5),
+        color: Colors.black,
         padding: const EdgeInsets.all(8.0),
         child: ListView.builder(
           itemCount: tasks.length,
@@ -202,18 +218,18 @@ class _TodoState extends State<TodoT> {
             return Card(
               elevation: 4,
               margin: const EdgeInsets.symmetric(vertical: 8.0),
-              color: Colors.white,
+              color: Colors.grey[850],
               child: ListTile(
                 title: Text(
                   task['content'],
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
                 ),
-                subtitle: Text(task['description'] ?? "", style: const TextStyle(color: Colors.grey)),
+                subtitle: Text(task['description'] ?? "", style: const TextStyle(color: Colors.white70)),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.edit, color: Colors.blue),
+                      icon: const Icon(Icons.edit, color: Colors.blueAccent),
                       onPressed: () {
                         _openUpdateDialog(
                           task['id'].toString(),
@@ -223,7 +239,7 @@ class _TodoState extends State<TodoT> {
                       },
                     ),
                     IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
+                      icon: const Icon(Icons.delete, color: Colors.redAccent),
                       onPressed: () {
                         deleteData(task['id'].toString());
                       },
@@ -240,7 +256,7 @@ class _TodoState extends State<TodoT> {
           _openAddTaskDialog();
         },
         child: const Icon(Icons.add),
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.blueAccent,
       ),
     );
   }
@@ -254,6 +270,7 @@ class _TodoState extends State<TodoT> {
             borderRadius: BorderRadius.circular(16),
           ),
           child: Container(
+            color: Colors.grey[900],
             padding: const EdgeInsets.all(20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -263,53 +280,53 @@ class _TodoState extends State<TodoT> {
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Colors.blueGrey[700],
+                    color: Colors.blueGrey[200],
                   ),
                 ),
                 const SizedBox(height: 10),
                 TextField(
                   controller: addController,
+                  style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     labelText: 'Task Name',
+                    labelStyle: const TextStyle(color: Colors.white70),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    prefixIcon: Icon(Icons.task),
+                    prefixIcon: const Icon(Icons.task, color: Colors.white70),
                   ),
                 ),
                 const SizedBox(height: 10),
                 TextField(
                   controller: descriptionController,
+                  style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     labelText: 'Task Description',
+                    labelStyle: const TextStyle(color: Colors.white70),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    prefixIcon: Icon(Icons.description),
+                    prefixIcon: const Icon(Icons.description, color: Colors.white70),
                   ),
                 ),
                 const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () {
-                        if (addController.text.isNotEmpty &&
-                            descriptionController.text.isNotEmpty) {
-                          postData(addController.text, descriptionController.text);
-                        } else {
-                          _showAlertDialog("Error", "Please fill all fields");
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text('Add Task'),
-                    ),
-                  ],
+                TextButton(
+                  onPressed: () {
+                    if (addController.text.isNotEmpty &&
+                        descriptionController.text.isNotEmpty) {
+                      postData(addController.text, descriptionController.text);
+                    } else {
+                      _showAlertDialog("Error", "Please fill all fields");
+                    }
+                  },
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                  ),
+                  child: const Text(
+                    'Add Task',
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
               ],
             ),

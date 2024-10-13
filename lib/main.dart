@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:todoist_todo/Screens/splash.dart';
 import 'package:todoist_todo/Screens/todoapp.dart';
 
 void main() {
@@ -12,7 +13,7 @@ class TodoApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: TodoT(),
+      home:Splash(),
     );
   }
 }
