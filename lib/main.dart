@@ -3,7 +3,7 @@ import 'package:todoist_todo/Screens/splash.dart';
 import 'package:todoist_todo/Screens/todoapp.dart';
 
 void main() {
-  runApp(TodoApp());
+  runApp(const TodoApp());
 }
 
 class TodoApp extends StatelessWidget {

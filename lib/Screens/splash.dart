@@ -22,12 +22,12 @@ class _SplashState extends State<Splash> {
   @override
   Widget build(BuildContext context) {
     return const  Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.blueGrey,
       body:  Center(
         child:  Text('Stay organized everyday',style: TextStyle(
           fontSize: 30,
           fontWeight: FontWeight.bold,
-          color: Colors.white
+          color: Color(0xffE0F7FA)
         ),),
       ),
     );

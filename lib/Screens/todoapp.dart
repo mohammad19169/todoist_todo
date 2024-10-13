@@ -13,7 +13,7 @@ class _TodoState extends State<TodoT> {
   TextEditingController addController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
   List<Map<String, dynamic>> tasks = [];
-  String todoistApiKey = '346b45e26a52908b1625de738804690e19e11fba';
+  String todoistApiKey = '2fa06832ebd7fb8722ce876fb536009f56af1f6b';
 
   @override
   void initState() {
@@ -205,7 +205,7 @@ class _TodoState extends State<TodoT> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.blueGrey,
         title: const Center(child:  Text("Get It Done", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 25))),
       ),
       body: Container(
@@ -255,8 +255,8 @@ class _TodoState extends State<TodoT> {
         onPressed: () {
           _openAddTaskDialog();
         },
+        backgroundColor: Colors.blueGrey,
         child: const Icon(Icons.add),
-        backgroundColor: Colors.blueAccent,
       ),
     );
   }
