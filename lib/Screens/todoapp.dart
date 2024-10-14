@@ -13,7 +13,7 @@ class _TodoState extends State<TodoT> {
   TextEditingController addController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
   List<Map<String, dynamic>> tasks = [];
-  String todoistApiKey = '2fa06832ebd7fb8722ce876fb536009f56af1f6b';
+  String todoistApiKey = '346b45e26a52908b1625de738804690e19e11fba';
 
   @override
   void initState() {
