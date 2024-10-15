@@ -16,7 +16,7 @@ class _SplashState extends State<Splash> {
     // TODO: implement initState
     super.initState();
     Timer(const Duration(seconds: 2), (){
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=> const TodoT()));
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>  TodoT() ));
     });
   }
   @override
